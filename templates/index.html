@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NeviSight - Upload</title>
+</head>
+<body>
+  <h2>Upload Fundus Image</h2>
+
+  <form method="POST" action="/upload" enctype="multipart/form-data">
+    <label>Choose File:</label>
+    <input type="file" name="file" accept=".jpg,.jpeg,.png,.dcm" required><br><br>
+
+    <label>Patient Name:</label>
+    <input type="text" name="patient_name" required><br><br>
+
+    <label>Age:</label>
+    <input type="number" name="age" required><br><br>
+
+    <label>Eye:</label>
+    <select name="eye" required>
+      <option value="left">Left</option>
+      <option value="right">Right</option>
+    </select><br><br>
+
+    <label>Select AI Model:</label>
+    <select name="model" required>
+      <option value="default_model">Default Model</option>
+      <!-- More options from registry later -->
+    </select><br><br>
+
+    <button type="submit">Upload & Analyze</button>
+  </form>
+</body>
+</html>

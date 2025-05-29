@@ -1,0 +1,23 @@
+# Don't commit your virtual environment
+env/
+__pycache__/
+*.pyc
+
+# OS-generated
+.DS_Store
+Thumbs.db
+
+# Ignore model files
+*.keras
+*.h5
+*.pb
+
+# Uploaded/temporary files
+uploads/
+pdf export/
+
+# VSCode settings (optional)
+.vscode/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
