@@ -12,12 +12,6 @@ from tensorflow.keras.models import load_model
 from keras_unet_collection import models, losses
 from keras.optimizers import Adam
 
-from flask import Flask, request, render_template, send_from_directory
-from werkzeug.utils import secure_filename
-from PIL import Image
-import os
-import pydicom
-
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm'}
 
