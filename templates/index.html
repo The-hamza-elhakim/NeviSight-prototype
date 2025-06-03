@@ -1,35 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>NeviSight - Upload</title>
+    <title>Upload Fundus Image</title>
+    <style>
+        #error-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
 </head>
+
 <body>
-  <h2>Upload Fundus Image</h2>
+    <h1 style="text-align:center; font-size: 3em; margin-bottom: 20px;">NEVISIGHT</h1>
 
-  <form method="POST" action="/upload" enctype="multipart/form-data">
-    <label>Choose File:</label>
-    <input type="file" name="file" accept=".jpg,.jpeg,.png,.dcm" required><br><br>
+    <form method="POST" action="/upload" enctype="multipart/form-data">
+        <label>Choose File:
+            <input type="file" id="fileInput" name="file" required>
+        </label><br><br>
 
-    <label>Patient Name:</label>
-    <input type="text" name="patient_name" required><br><br>
+        <div id="error-message">File type not supported.</div>
 
-    <label>Age:</label>
-    <input type="number" name="age" required><br><br>
+        <div id="metadataFields" style="display:none;">
+            <label>Patient Name: <input type="text" name="patient_name"></label><br><br>
+            <label>Age: <input type="number" name="age"></label><br><br>
+            <label>Eye:
+                <select name="eye">
+                    <option value="Left">Left</option>
+                    <option value="Right">Right</option>
+                </select>
+            </label><br><br>
+        </div>
 
-    <label>Eye:</label>
-    <select name="eye" required>
-      <option value="left">Left</option>
-      <option value="right">Right</option>
-    </select><br><br>
+        <label>Select AI Model:
+            <select name="model">
+                <option value="default">Default Model</option>
+            </select>
+        </label><br><br>
 
-    <label>Select AI Model:</label>
-    <select name="model" required>
-      <option value="default_model">Default Model</option>
-      <!-- More options from registry later -->
-    </select><br><br>
+        <button id="submitBtn" type="submit" disabled>Upload & Analyze</button>
+    </form>
 
-    <button type="submit">Upload & Analyze</button>
-  </form>
+    <!-- JavaScript should be loaded after all HTML elements exist -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
