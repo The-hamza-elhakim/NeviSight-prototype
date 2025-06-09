@@ -22,3 +22,10 @@ pdf export/
 
 # Notebook checkpoints
 .ipynb_checkpoints/
+
+# .gitignore
+fundus_classifier_dataset/
+*.dcm
+*.jpg
+*.png
+

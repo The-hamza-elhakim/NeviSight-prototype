@@ -10,15 +10,17 @@ import matplotlib.pyplot as plt
 IMAGE_SIZE = (224, 224)
 BATCH_SIZE = 16
 EPOCHS = 10
-DATA_DIR = "fundus_classifier_dataset"
-MODEL_PATH = "models/fundus_classifier.keras"
+DATA_DIR = r"C:\Users\hamza\Documents\Projects\Research Projects\my data\Proccesed dataset"  # ← Change if needed
+MODEL_PATH = "models/fundus_validator.keras"
+os.makedirs("models", exist_ok=True)
 
 # --- Data Load ---
 datagen = ImageDataGenerator(
     rescale=1./255,
     validation_split=0.2,
-    rotation_range=10,
-    zoom_range=0.1,
+    rotation_range=15,
+    zoom_range=0.2,
+    brightness_range=[0.8, 1.2],
     horizontal_flip=True
 )
 
@@ -40,13 +42,13 @@ val_gen = datagen.flow_from_directory(
 
 # --- Model Build ---
 base_model = MobileNetV2(input_shape=IMAGE_SIZE + (3,), include_top=False, weights='imagenet')
-base_model.trainable = False  # freeze for now
+base_model.trainable = False
 
 model = models.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
     layers.Dense(64, activation='relu'),
-    layers.Dense(1, activation='sigmoid')  # binary output
+    layers.Dense(1, activation='sigmoid')  # Binary output
 ])
 
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -64,9 +66,12 @@ history = model.fit(
     callbacks=callbacks
 )
 
-# --- Visualize ---
-plt.plot(history.history['accuracy'], label='train acc')
-plt.plot(history.history['val_accuracy'], label='val acc')
-plt.title("Training Accuracy")
+# --- Visualization ---
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title("Fundus Validator Training Accuracy")
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy")
 plt.legend()
+plt.grid()
 plt.show()
