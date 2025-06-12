@@ -80,11 +80,11 @@ def upload_file():
     try:
         if not is_fundus_image(file_path):
             return render_template_string('''
-                <h3 style="color:red;">❌ Invalid image. Please upload a valid fundus scan.</h3>
+                <h3 style="color:red;">Invalid image. Please upload a valid fundus scan.</h3>
                 <a href="/">← Back to Upload</a>
             ''')
 
-        print("✔ Fundus image validated successfully.")
+        print("✅ Fundus image validated successfully.")
 
         ext = filename.rsplit('.', 1)[1].lower()
         if ext == 'dcm' or is_dicom(file_path):
