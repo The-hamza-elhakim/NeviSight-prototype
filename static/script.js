@@ -1,6 +1,53 @@
 document.addEventListener('DOMContentLoaded', function () {
     console.log("🧠 script.js is loaded and running.");
 
+    const modelSelect = document.querySelector('select[name="model"]');
+
+    // Preload the default model (e.g., "unet")
+    fetch('/preload-model/unet')
+        .then(res => res.json())
+        .then(data => console.log("✅ Default model preloaded:", data.message))
+        .catch(err => console.error("❌ Error preloading default model:", err));
+
+    // Dynamically load model list from backend
+    fetch('/get-models')
+        .then(res => res.json())
+        .then(models => {
+            if (models.length === 0) {
+                const option = document.createElement('option');
+                option.text = 'No models available';
+                option.disabled = true;
+                modelSelect.appendChild(option);
+                return;
+            }
+
+            modelSelect.innerHTML = ''; // Clear existing options
+
+            models.forEach((model, index) => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.text = model.name;
+                if (index === 0) option.selected = true; // Auto-select first model
+                modelSelect.appendChild(option);
+            });
+
+            // ✅ Attach change listener to preload model on selection
+            modelSelect.addEventListener('change', function () {
+                const selectedModel = modelSelect.value;
+                fetch(`/preload-model/${selectedModel}`)
+                    .then(res => res.json())
+                    .then(data => console.log(`✅ Preloaded ${selectedModel}:`, data.message))
+                    .catch(err => console.error(`❌ Failed to preload ${selectedModel}:`, err));
+            });
+        })
+        .catch(err => {
+            console.error("❌ Failed to load models:", err);
+            const option = document.createElement('option');
+            option.text = 'Error loading models';
+            option.disabled = true;
+            modelSelect.appendChild(option);
+        });
+
     const fileInput = document.getElementById('fileInput');
     const errorMsg = document.getElementById('error-message');
     const submitBtn = document.getElementById('submitBtn');
@@ -45,29 +92,29 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'ok') {
-                errorMsg.style.display = 'none';
-                submitBtn.disabled = false;
-                metadataFields.style.display = ext === 'dcm' ? 'none' : 'block';
-                console.log("✅ Fundus image validated successfully.");
-            } else {
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'ok') {
+                    errorMsg.style.display = 'none';
+                    submitBtn.disabled = false;
+                    metadataFields.style.display = ext === 'dcm' ? 'none' : 'block';
+                    console.log("✅ Fundus image validated successfully.");
+                } else {
+                    errorMsg.style.display = 'block';
+                    errorMsg.innerText = result.message || 'This is not a valid fundus image.';
+                    submitBtn.disabled = true;
+                    metadataFields.style.display = 'none';
+                    fileInput.value = ''; // clear invalid file
+                    console.warn("⚠️ Fundus image rejected by backend.");
+                }
+            })
+            .catch(err => {
+                console.error("❌ Error during validation:", err);
                 errorMsg.style.display = 'block';
-                errorMsg.innerText = result.message || 'This is not a valid fundus image.';
+                errorMsg.innerText = 'Error validating image.';
                 submitBtn.disabled = true;
                 metadataFields.style.display = 'none';
-                fileInput.value = ''; // clear invalid file
-                console.warn("⚠️ Fundus image rejected by backend.");
-            }
-        })
-        .catch(err => {
-            console.error("❌ Error during validation:", err);
-            errorMsg.style.display = 'block';
-            errorMsg.innerText = 'Error validating image.';
-            submitBtn.disabled = true;
-            metadataFields.style.display = 'none';
-            fileInput.value = '';
-        });
+                fileInput.value = '';
+            });
     });
 });

@@ -23,15 +23,28 @@
         <div id="error-message">File type not supported.</div>
 
         <div id="metadataFields" style="display:none;">
-            <label>Patient Name: <input type="text" name="patient_name"></label><br><br>
-            <label>Age: <input type="number" name="age"></label><br><br>
-            <label>Eye:
-                <select name="eye">
-                    <option value="Left">Left</option>
-                    <option value="Right">Right</option>
-                </select>
-            </label><br><br>
-        </div>
+    <label>Age:
+        <input type="number" name="age" min="0" max="120">
+    </label><br><br>
+
+    <label>Sex:
+        <select name="sex">
+            <option value="Unknown">Unknown</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+            <option value="O">Other</option>
+        </select>
+    </label><br><br>
+
+    <label>Eye:
+        <select name="eye">
+            <option value="Unknown">Unknown</option>
+            <option value="Left">Left</option>
+            <option value="Right">Right</option>
+        </select>
+    </label><br><br>
+</div>
+
 
         <label>Select AI Model:
             <select name="model">

@@ -1,0 +1,7 @@
+{
+  "unet": {
+    "name": "UNet Model",
+    "file": "best_model_128.keras",
+    "input_size": [128, 128]
+  }
+}
