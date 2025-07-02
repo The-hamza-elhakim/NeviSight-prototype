@@ -60,15 +60,25 @@ def preprocess_image_for_validation(file_bytes, ext):
 def is_fundus_image(file_bytes, ext):
     processed_img = preprocess_image_for_validation(file_bytes, ext)
     prediction = classifier_model.predict(processed_img)[0][0]
-    return prediction >= 0.5
+    is_valid = prediction >= 0.5
+    return is_valid, processed_img
+
 
 def extract_dicom_metadata(file_bytes):
     dcm = pydicom.dcmread(io.BytesIO(file_bytes))
+    # Get raw study date string
+    raw_date = getattr(dcm, "StudyDate", None)
+
+    # Format DICOM date YYYYMMDD -> YYYY-MM-DD
+    formatted_date = None
+    if raw_date and len(raw_date) == 8:
+        formatted_date = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}"
+
     metadata = {
         "mrn": getattr(dcm, "PatientID", None),
         "age": getattr(dcm, "PatientAge", None),
         "sex": getattr(dcm, "PatientSex", None),
-        "study_date": getattr(dcm, "StudyDate", None),
+        "study_date": formatted_date,
         "eye": getattr(dcm, "Laterality", None) or getattr(dcm, "ImageLaterality", None)
     }
     return metadata
@@ -105,7 +115,7 @@ def preload_model(model_id):
         return jsonify({'status': 'error', 'message': 'Invalid model ID'}), 400
 
     if model_id not in MODEL_CACHE:
-        print(f"🧠 Preloading model '{model_id}'...")
+        print(f"Preloading model... '{model_id}'...")
         model_path = os.path.join(app.root_path, 'models', MODEL_REGISTRY[model_id]['file'])
         MODEL_CACHE[model_id] = tf.keras.models.load_model(
             model_path,
@@ -138,11 +148,13 @@ def upload_file():
     file_bytes = file.read()
 
     try:
-        if not is_fundus_image(file_bytes, ext):
+        is_valid, preprocessed_array = is_fundus_image(file_bytes, ext)
+        if not is_valid:
             return render_template_string('''
                 <h3 style="color:red;">Invalid image. Please upload a valid fundus scan.</h3>
                 <a href="/">← Back to Upload</a>
             ''')
+
 
         print(f"✅ Fundus image validated. Using model: {model_id}")
 
@@ -154,7 +166,7 @@ def upload_file():
             metadata = {
                 "mrn": request.form.get('mrn'),
                 "age": request.form.get('age'),
-                "sex": request.form.get('sex'),
+                "gender": request.form.get('gender'),
                 "study_date": request.form.get('study_date'),
                 "eye": request.form.get('eye'),
                 "source": "Manual"
@@ -174,12 +186,18 @@ def upload_file():
         else:
             img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
 
-        img_resized = img.resize(input_size)
-        img_array = np.array(img_resized) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        if ext == 'dcm':
+            # Use the already-preprocessed array resized for model
+            img_array = tf.image.resize(preprocessed_array, input_size).numpy()
+            print("✅ Using cached preprocessed array for DICOM.")
+        else:
+            img_resized = img.resize(input_size)
+            img_array = np.array(img_resized) / 255.0
+            img_array = np.expand_dims(img_array, axis=0)
+
 
         if model_id not in MODEL_CACHE:
-            print(f"🧠 Loading model '{model_id}' from disk...")
+            print(f"Loading model... '{model_id}' from disk...")
             model_path = os.path.join(app.root_path, 'models', model_config['file'])
             MODEL_CACHE[model_id] = tf.keras.models.load_model(
                 model_path,
@@ -189,7 +207,13 @@ def upload_file():
             print(f"⚡ Using cached model: {model_id}")
 
         seg_model = MODEL_CACHE[model_id]
+
+        start_time = time.time()
         prediction = seg_model.predict(img_array)
+        end_time = time.time()
+
+        prediction_duration = end_time - start_time
+        prediction_time_str = f"{prediction_duration:.2f} seconds" 
         binary_mask = (prediction > 0.5).astype(np.uint8)
 
         output_img = Image.fromarray(binary_mask.squeeze() * 255).convert("L")
@@ -203,14 +227,21 @@ def upload_file():
         output_resized.save(proc_buf, format='PNG')
         proc_base64 = base64.b64encode(proc_buf.getvalue()).decode('utf-8')
 
-        return render_template_string('''
+        return render_template_string(
+            '''
             <h3>Segmentation complete using model: {{ model_id }}</h3>
+            <p><strong>Processing Time:</strong> {{ prediction_time }}</p>
             <p>Original Image:</p>
             <img src="data:image/png;base64,{{ orig_base64 }}" width="400"><br><br>
             <p>Processed Output:</p>
             <img src="data:image/png;base64,{{ proc_base64 }}" width="400"><br><br>
             <a href="/">← Back to Upload</a>
-        ''', model_id=model_id, orig_base64=orig_base64, proc_base64=proc_base64)
+            ''',
+            model_id=model_id,
+            orig_base64=orig_base64,
+            proc_base64=proc_base64,
+            prediction_time=prediction_time_str
+)
 
     except Exception as e:
         return f"Error during processing: {e}", 500

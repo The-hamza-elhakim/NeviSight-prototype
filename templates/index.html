@@ -32,8 +32,8 @@
                 <input type="number" name="age" min="0" max="120">
             </label><br><br>
 
-            <label>Sex:<br>
-                <select name="sex">
+            <label>Gender:<br>
+                <select name="Gender">
                     <option value="Unknown">Unknown</option>
                     <option value="M">Male</option>
                     <option value="F">Female</option>
@@ -44,8 +44,8 @@
             <label>Eye:<br>
                 <select name="eye">
                     <option value="Unknown">Unknown</option>
-                    <option value="OD">Right Eye (OD)</option>
-                    <option value="OS">Left Eye (OS)</option>
+                    <option value="RIGHT">Right Eye </option>
+                    <option value="LEFT">Left Eye </option>
                 </select>
             </label><br><br>
 
@@ -61,6 +61,10 @@
         </label><br><br>
 
         <button id="submitBtn" type="submit" disabled>Upload & Analyze</button>
+        <div id="loadingMessage" style="display:none; font-weight:bold; margin-top:15px;">
+            Analyzing image... Please wait.
+        </div>
+
     </form>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
