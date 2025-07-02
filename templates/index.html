@@ -22,29 +22,37 @@
 
         <div id="error-message">File type not supported.</div>
 
-        <div id="metadataFields" style="display:none;">
-    <label>Age:
-        <input type="number" name="age" min="0" max="120">
-    </label><br><br>
+        <!-- Metadata fields shown only for PNG/JPG -->
+        <div id="metadataFields" style="display:none; margin-top:20px;">
+            <label>Medical Record Number (MRN):<br>
+                <input type="text" name="mrn">
+            </label><br><br>
 
-    <label>Sex:
-        <select name="sex">
-            <option value="Unknown">Unknown</option>
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-            <option value="O">Other</option>
-        </select>
-    </label><br><br>
+            <label>Age:<br>
+                <input type="number" name="age" min="0" max="120">
+            </label><br><br>
 
-    <label>Eye:
-        <select name="eye">
-            <option value="Unknown">Unknown</option>
-            <option value="Left">Left</option>
-            <option value="Right">Right</option>
-        </select>
-    </label><br><br>
-</div>
+            <label>Sex:<br>
+                <select name="sex">
+                    <option value="Unknown">Unknown</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                    <option value="O">Other</option>
+                </select>
+            </label><br><br>
 
+            <label>Eye:<br>
+                <select name="eye">
+                    <option value="Unknown">Unknown</option>
+                    <option value="OD">Right Eye (OD)</option>
+                    <option value="OS">Left Eye (OS)</option>
+                </select>
+            </label><br><br>
+
+            <label>Study Date:<br>
+                <input type="date" name="study_date">
+            </label><br><br>
+        </div>
 
         <label>Select AI Model:
             <select name="model">
@@ -55,7 +63,6 @@
         <button id="submitBtn" type="submit" disabled>Upload & Analyze</button>
     </form>
 
-    <!-- JavaScript should be loaded after all HTML elements exist -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

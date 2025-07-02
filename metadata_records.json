@@ -1,0 +1,20 @@
+[
+  {
+    "mrn": "915745731",
+    "age": null,
+    "sex": "F",
+    "study_date": "20240215",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-02T03:22:39.409978"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "8",
+    "sex": "F",
+    "study_date": "",
+    "eye": "OD",
+    "source": "Manual",
+    "uploaded_at": "2025-07-02T03:48:30.963745"
+  }
+]
