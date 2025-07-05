@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, render_template_string, jsonify
+from flask import Flask, request, render_template, render_template_string, jsonify, make_response
 from werkzeug.utils import secure_filename
 from PIL import Image
 import pydicom
@@ -11,6 +11,7 @@ import keras
 from tensorflow.keras.models import load_model
 from keras_unet_collection import models, losses
 from keras.optimizers import Adam
+from weasyprint import HTML
 import json
 import base64
 from datetime import datetime
@@ -147,6 +148,8 @@ def upload_file():
     ext = file.filename.rsplit('.', 1)[1].lower()
     file_bytes = file.read()
 
+    safe_base = secure_filename(file.filename).rsplit(".", 1)[0]
+
     try:
         is_valid, preprocessed_array = is_fundus_image(file_bytes, ext)
         if not is_valid:
@@ -227,24 +230,64 @@ def upload_file():
         output_resized.save(proc_buf, format='PNG')
         proc_base64 = base64.b64encode(proc_buf.getvalue()).decode('utf-8')
 
+
         return render_template_string(
-            '''
-            <h3>Segmentation complete using model: {{ model_id }}</h3>
-            <p><strong>Processing Time:</strong> {{ prediction_time }}</p>
-            <p>Original Image:</p>
-            <img src="data:image/png;base64,{{ orig_base64 }}" width="400"><br><br>
-            <p>Processed Output:</p>
-            <img src="data:image/png;base64,{{ proc_base64 }}" width="400"><br><br>
-            <a href="/">← Back to Upload</a>
-            ''',
-            model_id=model_id,
-            orig_base64=orig_base64,
-            proc_base64=proc_base64,
-            prediction_time=prediction_time_str
-)
+        '''
+        <h3>Segmentation complete using model: {{ model_id }}</h3>
+        <p><strong>Processing Time:</strong> {{ prediction_time }}</p>
+        <p>Original Image:</p>
+        <img src="data:image/png;base64,{{ orig_base64 }}" width="400"><br><br>
+        <p>Processed Output:</p>
+        <img src="data:image/png;base64,{{ proc_base64 }}" width="400"><br><br>
+
+        <form method="post" action="/generate_pdf">
+            <input type="hidden" name="orig_base64" value="{{ orig_base64 }}">
+            <input type="hidden" name="proc_base64" value="{{ proc_base64 }}">
+            <input type="hidden" name="safe_base" value="{{ safe_base }}">
+            <button type="submit">Download PDF Report</button>
+        </form>
+
+        <a href="/">← Back to Upload</a>
+        ''',
+        model_id=model_id,
+        orig_base64=orig_base64,
+        proc_base64=proc_base64,
+        prediction_time=prediction_time_str,
+        safe_base=safe_base
+        )
+
+
 
     except Exception as e:
         return f"Error during processing: {e}", 500
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    # Get data from the form
+    orig_base64 = request.form['orig_base64']
+    proc_base64 = request.form['proc_base64']
+    safe_base = request.form['safe_base']
+
+    html = render_template(
+        "report_template.html",
+        patient_id=safe_base,
+        age="N/A",
+        sex="N/A",
+        exam_date=datetime.utcnow().strftime("%Y-%m-%d"),
+        exam_time=datetime.utcnow().strftime("%H:%M:%S"),
+        orig_base64=orig_base64,
+        proc_base64=proc_base64,
+        model_name="Attention U-Net v1.0",
+        processing_time="2 seconds",
+        year=datetime.utcnow().year
+    )
+
+    pdf = HTML(string=html).write_pdf()
+
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=report_{safe_base}.pdf'
+    return response
 
 
 # --- Run ---
