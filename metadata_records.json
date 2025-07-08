@@ -25,5 +25,122 @@
     "eye": "L",
     "source": "DICOM",
     "uploaded_at": "2025-07-02T21:31:17.974794"
+  },
+  {
+    "mrn": "882589620",
+    "age": null,
+    "sex": "M",
+    "study_date": "2024-02-14",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-05T05:54:19.267265"
+  },
+  {
+    "mrn": "915745731",
+    "age": null,
+    "sex": "F",
+    "study_date": "2024-02-15",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-07T20:40:05.705939"
+  },
+  {
+    "mrn": "882589620",
+    "age": null,
+    "sex": "M",
+    "study_date": "2024-02-14",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-07T20:42:30.210807"
+  },
+  {
+    "mrn": "7391710774",
+    "age": null,
+    "sex": "F",
+    "study_date": "2023-05-26",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-07T20:44:51.022808"
+  },
+  {
+    "mrn": "882589620",
+    "age": null,
+    "sex": "M",
+    "study_date": "2024-02-14",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-07T20:52:21.883113"
+  },
+  {
+    "mrn": "7391710774",
+    "age": null,
+    "sex": "F",
+    "study_date": "2023-05-26",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-07T21:05:34.065671"
+  },
+  {
+    "mrn": null,
+    "age": null,
+    "gender": null,
+    "study_date": null,
+    "eye": null,
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T19:35:19.540815"
+  },
+  {
+    "mrn": "882589620",
+    "age": null,
+    "sex": "M",
+    "study_date": "2024-02-14",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-07-08T19:45:33.230738"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "12",
+    "gender": "F",
+    "study_date": "2025-06-02",
+    "eye": "RIGHT",
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T19:46:57.519189"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "43",
+    "gender": "F",
+    "study_date": "2025-07-28",
+    "eye": "LEFT",
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T21:09:14.678674"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T21:42:23.191919"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "12",
+    "gender": "F",
+    "study_date": "2025-06-30",
+    "eye": "LEFT",
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T22:03:31.511555"
+  },
+  {
+    "mrn": "12341234132",
+    "age": "",
+    "gender": "F",
+    "study_date": "2025-06-24",
+    "eye": "RIGHT",
+    "source": "Manual",
+    "uploaded_at": "2025-07-08T22:06:23.012968"
   }
 ]

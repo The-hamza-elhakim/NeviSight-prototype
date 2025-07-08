@@ -1,0 +1,62 @@
+body {
+  font-family: 'Open Sans', sans-serif;
+  background-color: #f8f9fa;
+}
+
+.card {
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+}
+
+.card-header {
+  background-color: #5dade2; /* Light Blue */
+  color: #fff;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.btn-primary {
+  background-color: #3498db; /* Primary Blue */
+  border-color: #3498db;
+  border-radius: 50px; /* Pill shape */
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.btn-primary:hover {
+  background-color: #85c1e9;
+  border-color: #85c1e9;
+}
+
+.file-input {
+  padding: 1rem;
+  border: 2px dashed #3498db;
+  border-radius: 0.5rem;
+  background-color: #ecf0f1;
+  text-align: center;
+  cursor: pointer;
+}
+
+.spinner-border {
+  width: 1rem;
+  height: 1rem;
+}
+
+.error-message {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+}
+
+.file-input {
+  padding: 1.5rem;
+  border: 2px dashed #3498db;
+  border-radius: 0.5rem;
+  background-color: #ecf0f1;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.file-input.dragover {
+  background-color: #d0e8ff;
+}

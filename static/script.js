@@ -1,36 +1,70 @@
 document.addEventListener('DOMContentLoaded', function () {
-    console.log("🧠 script.js is loaded and running.");
 
-    const modelSelect = document.querySelector('select[name="model"]');
-    const fileInput = document.getElementById('fileInput');
-    const errorMsg = document.getElementById('error-message');
-    const submitBtn = document.getElementById('submitBtn');
-    const metadataFields = document.getElementById('metadataFields');
-    const form = document.querySelector('form');
-    const loadingMessage = document.getElementById('loadingMessage');
+    const modelSelect = document.getElementById('modelSelect');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
 
-    submitBtn.disabled = true;
-
-    // Load models
+    // Fetch available models from backend
     fetch('/get-models')
-        .then(res => res.json())
+        .then(response => response.json())
         .then(models => {
-            modelSelect.innerHTML = '';
+            modelSelect.innerHTML = ''; // Clear the "Loading..." option
             models.forEach((model, index) => {
                 const option = document.createElement('option');
                 option.value = model.id;
-                option.text = model.name;
+                option.textContent = model.name;
                 if (index === 0) option.selected = true;
                 modelSelect.appendChild(option);
             });
+        })
+        .catch(error => {
+            console.error("Error loading models:", error);
+            modelSelect.innerHTML = '<option disabled>Error loading models</option>';
         });
+
+
+    const fileInput = document.getElementById('fileInput');
+    const errorContainer = document.getElementById('errorContainer');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const metadataFields = document.getElementById('metadataFields');
+    const mrnInput = document.getElementById('mrnInput');
+    const dropZone = document.getElementById('dropZone');
+
+    // Click on dropZone triggers file dialog
+    dropZone.addEventListener('click', function() {
+        fileInput.click();
+    });
+
+    // Drag over styling
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    // Remove styling on drag leave
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+    });
+
+    // Handle dropped file
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            // Trigger change event manually
+            const event = new Event('change');
+            fileInput.dispatchEvent(event);
+        }
+    });
 
     fileInput.addEventListener('change', function () {
         const file = fileInput.files[0];
         if (!file) {
-            errorMsg.style.display = 'none';
-            submitBtn.disabled = true;
+            errorContainer.style.display = 'none';
+            uploadBtn.disabled = true;
             metadataFields.style.display = 'none';
+            fileNameDisplay.style.display = 'none';
             return;
         }
 
@@ -38,25 +72,66 @@ document.addEventListener('DOMContentLoaded', function () {
         const allowedExtensions = ['jpg', 'jpeg', 'png', 'dcm'];
 
         if (!allowedExtensions.includes(ext)) {
-            errorMsg.style.display = 'block';
-            errorMsg.innerText = 'File type not supported.';
-            submitBtn.disabled = true;
+            errorContainer.style.display = 'block';
+            errorContainer.innerText = 'File type not supported.';
+            uploadBtn.disabled = true;
             metadataFields.style.display = 'none';
             return;
         }
 
-        errorMsg.style.display = 'none';
-        submitBtn.disabled = false;
-        metadataFields.style.display = ext === 'dcm' ? 'none' : 'block';
+        fileNameDisplay.style.display = 'block';
+        fileNameDisplay.innerText = `Selected File: ${file.name}`;
 
-        // Dynamically require MRN only for non-DICOM
-        const mrnInput = document.querySelector('input[name="mrn"]');
-        mrnInput.required = ext !== 'dcm';
+
+        errorContainer.style.display = 'none';
+        uploadBtn.disabled = true;
+        metadataFields.style.display = 'none';
+
+        // Create FormData for AJAX request
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Show spinner while validating
+        uploadBtn.innerHTML = `Validating... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+        fetch('/validate-fundus', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.valid) {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = 'Upload and Analyze';
+                if (ext === 'dcm') {
+                    metadataFields.style.display = 'none';
+                    mrnInput.required = false;
+                } else {
+                    metadataFields.style.display = 'block';
+                    mrnInput.required = true;
+                }
+                
+            } else {
+                errorContainer.style.display = 'block';
+                errorContainer.innerText = 'Not a valid fundus image.';
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = 'Upload and Analyze';
+                metadataFields.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Validation error:', error);
+            errorContainer.style.display = 'block';
+            errorContainer.innerText = 'Error validating image.';
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = 'Upload and Analyze';
+            metadataFields.style.display = 'none';
+        });
     });
 
-    form.addEventListener('submit', function () {
-        loadingMessage.style.display = 'block';
-        submitBtn.disabled = true;
-        submitBtn.innerText = 'Uploading...';
+
+    document.getElementById('uploadForm').addEventListener('submit', function () {
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = `Processing... <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
     });
 });

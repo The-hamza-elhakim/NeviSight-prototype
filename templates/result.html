@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4">
+  <h4>Segmentation Complete</h4>
+  <table class="table table-bordered w-auto mx-auto mt-3">
+    <tr>
+      <th>Model Used</th>
+      <td>{{ model_name }}</td>
+    </tr>
+    <tr>
+      <th>Processing Time</th>
+      <td>{{ prediction_time }}</td>
+    </tr>
+  </table>
+</div>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header text-center">Original Image</div>
+      <img src="data:image/png;base64,{{ orig_base64 }}" class="card-img-top" alt="Original">
+    </div>
+  </div>
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header text-center">Processed Image</div>
+      <img src="data:image/png;base64,{{ proc_base64 }}" class="card-img-top" alt="Processed">
+    </div>
+  </div>
+</div>
+<div class="text-center mt-4">
+  <form method="post" action="/generate_pdf">
+    <input type="hidden" name="cache_id" value="{{ cache_id }}">
+    <button type="submit" class="btn btn-primary">Download PDF Report</button>
+  </form>
+  <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Upload Another</a>
+</div>
+{% endblock %}
