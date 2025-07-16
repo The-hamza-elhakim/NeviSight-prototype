@@ -323,8 +323,6 @@ def generate_pdf():
     response.headers['Content-Disposition'] = f'attachment; filename=report_{data["safe_base"]}.pdf'
     return response
 
-
-
 # --- Run ---
 if __name__ == "__main__":
     app.run(debug=True)
