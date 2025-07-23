@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, render_template_string, jsonify, make_response
 from werkzeug.utils import secure_filename
+from my_image_processing_library import draw_mask_contour_on_image
 from PIL import Image
 import pydicom
 import io
@@ -14,6 +15,7 @@ from keras.optimizers import Adam
 import pdfkit
 import json
 import base64
+import cv2
 from datetime import datetime
 from uuid import uuid4
 
@@ -255,16 +257,54 @@ def upload_file():
         prediction_time_str = f"{prediction_duration:.2f} seconds" 
         binary_mask = (prediction > 0.5).astype(np.uint8)
 
-        output_img = Image.fromarray(binary_mask.squeeze() * 255).convert("L")
-        output_resized = output_img.resize((2048, 2048))
+        # Basic lesion detection logic
+        lesion_detected = np.sum(binary_mask) > 0
+
 
         orig_buf = io.BytesIO()
         img.save(orig_buf, format='PNG')
         orig_base64 = base64.b64encode(orig_buf.getvalue()).decode('utf-8')
 
+        # Prepare image for contour overlay
+        overlay_input_img = img.resize(input_size)
+        overlay_np = np.array(overlay_input_img) / 255.0
+
+        # Make sure shape is (H, W, 3)
+        if overlay_np.ndim == 2:
+            overlay_np = np.stack([overlay_np]*3, axis=-1)
+        elif overlay_np.shape[-1] != 3:
+            overlay_np = overlay_np[:, :, :3]
+
+        # Get binary mask resized to model input size
+        mask_np = binary_mask.squeeze()
+
+        # Wrap into batch format for draw_contours_on_images (expects lists)
+        temp_folder = "static/temp_contours"
+        os.makedirs(temp_folder, exist_ok=True)
+
+        # Dummy GT
+        dummy_gt = np.zeros_like(mask_np)
+
+        # Upscale original image to 2048x2048 for display
+        display_img = img.resize((2048, 2048))
+        display_arr = np.array(display_img)
+
+        # Resize binary mask to 2048x2048
+        mask_resized = Image.fromarray(mask_np * 255).resize((2048, 2048))
+        mask_np_resized = (np.array(mask_resized) > 127).astype(np.uint8)
+
+        # Overlay contour in memory
+        contour_image = draw_mask_contour_on_image(display_arr, mask_np_resized)
+
+        # Convert to base64
         proc_buf = io.BytesIO()
-        output_resized.save(proc_buf, format='PNG')
-        proc_base64 = base64.b64encode(proc_buf.getvalue()).decode('utf-8')
+        contour_image.save(proc_buf, format='PNG')
+        proc_base64 = base64.b64encode(proc_buf.getvalue()).decode("utf-8")
+
+        lesion_detected = np.sum(binary_mask) > 0
+        soft_mask = prediction.squeeze()
+        conf_region = soft_mask[soft_mask > 0.5]
+        avg_confidence = float(np.mean(conf_region)) if conf_region.size > 0 else 0.0
 
         cache_id = str(uuid4())
         PDF_CACHE[cache_id] = {
@@ -275,7 +315,9 @@ def upload_file():
             "age": age,
             "sex": sex,
             "prediction_time": prediction_time_str,
-            "model_name": model_config["name"]
+            "model_name": model_config["name"],
+            "lesion_detected": lesion_detected,
+            "avg_confidence": avg_confidence,
         }
 
 
@@ -285,7 +327,8 @@ def upload_file():
             proc_base64=proc_base64,
             cache_id=cache_id,
             model_name=model_config["name"],
-            prediction_time=prediction_time_str
+            prediction_time=prediction_time_str,
+            lesion_detected=lesion_detected,
         )
 
     
@@ -311,6 +354,8 @@ def generate_pdf():
         proc_base64=data["proc_base64"],
         model_name="Attention U-Net v1.0",
         processing_time=data.get("prediction_time", "N/A"),
+        lesion_detected=data["lesion_detected"],
+        avg_confidence=data["avg_confidence"],
         year=datetime.utcnow().year
     )
 

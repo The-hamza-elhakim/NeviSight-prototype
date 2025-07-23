@@ -31,6 +31,18 @@
     </div>
   </div>
 </div>
+
+<div class="row justify-content-center mb-4">
+  <div class="col-md-6">
+    <div class="card p-4 text-center border-0 shadow-sm">
+      <p class="mb-0 fs-5 fw-bold {{ 'text-success' if not lesion_detected else 'text-muted' }}">
+          {{ 'Potential lesion detected.' if lesion_detected else 'No lesion detected.' }}
+        </strong>
+      </p>
+    </div>
+  </div>
+</div>
+
 <div class="text-center mt-4">
   <form method="post" action="/generate_pdf">
     <input type="hidden" name="cache_id" value="{{ cache_id }}">
