@@ -28,13 +28,49 @@
       margin-top: 0.5em;
     }
     th, td {
-      border: 2px solid #555;
-      padding: 6px;
-      font-size: 0.95em;
-      vertical-align: top;
+      border-top: 2px solid #555;
+      border-bottom: 2px solid #555;
+      padding: 0;
+      border-left: none;
+      border-right: none;
     }
-    td.label {
+
+    .info-table td,
+    .info-table th {
+      padding: 6px 8px; /* adjust as needed */
+      border-top: 2px solid #555;
+      border-bottom: 2px solid #555;
+      border-left: none;
+      border-right: none;
+    }
+
+    .info-table td.label {
       background-color: #eee;
+      font-weight: bold;
+    }
+
+    tr:first-child td,
+    tr:first-child th {
+      border-top: 2px solid #555;
+    }
+
+    tr:last-child td,
+    tr:last-child th {
+      border-bottom: 2px solid #555;
+    }
+
+    td:first-child,
+    th:first-child {
+      border-left: 2px solid #555;
+    }
+
+    td:last-child,
+    th:last-child {
+      border-right: 2px solid #555;
+    }
+
+    td.label {
+      background-color: #d8d8d8;
       font-weight: bold;
       width: 20%;
     }
@@ -54,6 +90,8 @@
     }
     .image-table {
       width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
       margin-top: 1em;
     }
     .image-table td {
@@ -66,6 +104,7 @@
       height: auto;
       display: block;
       margin: 0 auto;
+      object-fit: contain;
     }
     .image-label {
       margin-bottom: 0.3em;
@@ -78,7 +117,7 @@
   <h1>CHOROIDAL NEVUS ANALYSIS REPORT</h1>
 
   <div class="section-title">Patient Details</div>
-  <table>
+  <table class="info-table">
     <tr>
       <td class="label">Patient ID (MRN)</td>
       <td>{{ patient_id }}</td>
@@ -90,8 +129,8 @@
     <tr>
       <td class="label">Date of Scan</td>
       <td>{{ exam_date }}</td>
-      <td class="label">Time of Scan</td>
-      <td>{{ exam_time }}</td>
+      <td class="label">Eye</td>
+      <td>{{ eye }}</td>
       <td class="label">Technician</td>
       <td>Auto</td>
     </tr>
@@ -104,18 +143,17 @@
     <th style="text-align: center; padding: 0;">Processed Image</th>
   </tr>
   <tr>
-    <td style="padding: 0; height: 400px;">
+    <td style="padding: 5; height: 400px;">
       <img src="data:image/png;base64,{{ orig_base64 }}"
            style="width: 100%; height: 100%; object-fit: contain; display: block;">
     </td>
-    <td style="padding: 0; height: 400px;">
+    <td style="padding: 5; height: 400px;">
       <img src="data:image/png;base64,{{ proc_base64 }}"
            style="width: 100%; height: 100%; object-fit: contain; display: block;">
     </td>
   </tr>
 </table>
 
-<!-- LESION + METRICS SECTION -->
 <div style="margin-top: 15px; padding: 10px; border: 1px solid #ccc;">
   <p style="margin: 0; font-weight: bold; font-size: 14px; color: {{ 'green' if not lesion_detected else 'gray' }}">
     {{ 'No lesion detected.' if not lesion_detected else 'Potential lesion detected.' }}
@@ -127,20 +165,18 @@
   </p>
   {% endif %}
 
-  {% if lesion_area_px is defined %}
-  <p style="margin: 2px 0 0 0; font-size: 13px;">
-    <strong>Lesion Area:</strong> {{ lesion_area_px }} pixels
-  </p>
-  {% endif %}
-
-  <!-- Legend -->
   <p style="margin: 10px 0 0 0; font-size: 12px; font-style: italic;">
     <strong>Legend:</strong> Yellow contour = predicted lesion boundary
   </p>
 </div>
 
+  <div class="section-title">Clinician Notes</div>
+  <div class="notes">
+    {{ clinician_notes.replace('\n', '<br>') if clinician_notes else '' }}
+  </div>
+
   <div class="section-title">Model Details</div>
-  <table>
+  <table class="info-table">
     <tr>
       <td class="label">Model Used</td>
       <td>{{ model_name }}</td>
@@ -151,13 +187,7 @@
     </tr>
   </table>
 
-  <div class="section-title">Clinician Notes</div>
-  <div class="notes">
-    <!-- Empty notes area -->
-  </div>
-
   <div class="footer">
-    This report is automatically generated and intended for research purposes only.<br/>
     &copy; {{ year }} NeviSight Project
   </div>
 

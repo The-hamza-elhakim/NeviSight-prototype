@@ -43,11 +43,30 @@
   </div>
 </div>
 
+<div class="row justify-content-center mb-4">
+  <div class="col-md-8">
+    <label for="clinicianNotes" class="form-label fw-bold"></label>
+    <textarea id="clinicianNotes" name="clinician_notes" class="form-control" rows="5" placeholder="Type your observations here..."></textarea>
+  </div>
+</div>
+
 <div class="text-center mt-4">
   <form method="post" action="/generate_pdf">
     <input type="hidden" name="cache_id" value="{{ cache_id }}">
+    <input type="hidden" name="clinician_notes" id="hiddenNotesInput">
     <button type="submit" class="btn btn-primary">Download PDF Report</button>
   </form>
   <a href="{{ url_for('index') }}" class="btn btn-secondary ms-2">Upload Another</a>
 </div>
+
+<script>
+  const form = document.querySelector('form[action="/generate_pdf"]');
+  const notesTextarea = document.getElementById('clinicianNotes');
+  const hiddenInput = document.getElementById('hiddenNotesInput');
+
+  form.addEventListener('submit', function () {
+    hiddenInput.value = notesTextarea.value;
+  });
+</script>
+
 {% endblock %}

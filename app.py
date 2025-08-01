@@ -211,6 +211,7 @@ def upload_file():
         patient_id = metadata.get("mrn", "N/A")
         age = metadata.get("age", "N/A")
         sex = metadata.get("sex", "N/A")
+        eye = metadata.get("eye", "N/A")
 
 
         metadata["uploaded_at"] = datetime.utcnow().isoformat()
@@ -261,9 +262,17 @@ def upload_file():
         lesion_detected = np.sum(binary_mask) > 0
 
 
+        # Resize original to match the processed display dimensions (2048x2048)
+        resized_orig = img.resize((2048, 2048))
+
+        # Optional: crop black border if needed using same logic later (or keep as-is)
+        resized_orig = resized_orig.convert("RGB")
+
+        # Encode
         orig_buf = io.BytesIO()
-        img.save(orig_buf, format='PNG')
+        resized_orig.save(orig_buf, format='PNG')
         orig_base64 = base64.b64encode(orig_buf.getvalue()).decode('utf-8')
+
 
         # Prepare image for contour overlay
         overlay_input_img = img.resize(input_size)
@@ -317,6 +326,7 @@ def upload_file():
             "prediction_time": prediction_time_str,
             "model_name": model_config["name"],
             "lesion_detected": lesion_detected,
+            "eye": eye,
             "avg_confidence": avg_confidence,
         }
 
@@ -329,6 +339,7 @@ def upload_file():
             model_name=model_config["name"],
             prediction_time=prediction_time_str,
             lesion_detected=lesion_detected,
+            eye=eye,
         )
 
     
@@ -338,6 +349,7 @@ def upload_file():
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
     cache_id = request.form['cache_id']
+    clinician_notes = request.form.get("clinician_notes", "").strip()
     data = PDF_CACHE.pop(cache_id, None)
 
     if not data:
@@ -348,6 +360,7 @@ def generate_pdf():
         patient_id=data["patient_id"],
         age=data["age"],
         sex=data["sex"],
+        eye=data["eye"],
         exam_date=datetime.utcnow().strftime("%Y-%m-%d"),
         exam_time=datetime.utcnow().strftime("%H:%M:%S"),
         orig_base64=data["orig_base64"],
@@ -356,6 +369,7 @@ def generate_pdf():
         processing_time=data.get("prediction_time", "N/A"),
         lesion_detected=data["lesion_detected"],
         avg_confidence=data["avg_confidence"],
+        clinician_notes=clinician_notes,
         year=datetime.utcnow().year
     )
 
