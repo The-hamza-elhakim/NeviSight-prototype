@@ -21,7 +21,6 @@ if platform.system().lower() != "windows":
     from weasyprint import HTML, CSS
 
 
-
 # --- Config ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm'}
 METADATA_FILE = 'metadata_records.json'
@@ -53,19 +52,12 @@ def is_dicom_bytes(file_bytes):
     except Exception:
         return False
 
-def preprocess_image_for_validation(file_bytes, ext):
-    if ext == 'dcm' or is_dicom_bytes(file_bytes):
-        dcm = pydicom.dcmread(io.BytesIO(file_bytes))
-        arr = dcm.pixel_array
-        arr = ((arr - arr.min()) / (np.ptp(arr) + 1e-6) * 255).astype(np.uint8)
-        img = Image.fromarray(arr).convert("RGB")
-    else:
-        img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
-
+def preprocess_image_for_validation(file_bytes, _ext_unused=None):
+    img = pil_from_bytes(file_bytes)
     img = img.resize((224, 224))
-    arr = np.array(img) / 255.0
-    arr = np.expand_dims(arr, axis=0)
+    arr = (np.array(img).astype(np.float32) / 255.0)[None, ...]
     return arr
+
 
 def is_fundus_image(file_bytes, ext):
     processed_img = preprocess_image_for_validation(file_bytes, ext)
@@ -111,6 +103,25 @@ def _norm_age(v):
     if isinstance(v, str) and v and v[-1] in ("Y", "M", "W", "D"):
         return v[:-1]
     return v if v not in ("", None) else "N/A"
+
+def pil_from_bytes(file_bytes):
+    """
+    Returns a PIL.Image in RGB, handling both DICOM and regular image files.
+    Applies the same normalization path for DICOM (min-max to 0–255, uint8).
+    """
+    if is_dicom_bytes(file_bytes):
+        dcm = pydicom.dcmread(io.BytesIO(file_bytes))
+        arr = dcm.pixel_array.astype(np.float32)
+        # Min-max normalize to 0–1 to handle varied DICOM ranges
+        rng = np.ptp(arr)
+        if rng == 0:
+            arr = np.zeros_like(arr, dtype=np.uint8)
+        else:
+            arr = ((arr - arr.min()) / (rng + 1e-6) * 255).astype(np.uint8)
+        return Image.fromarray(arr).convert("RGB")
+    # PNG/JPG path
+    return Image.open(io.BytesIO(file_bytes)).convert("RGB")
+
 
 # --- Routes ---
 @app.route('/')
@@ -236,23 +247,11 @@ def upload_file():
         print("📝 Metadata saved:", metadata)
 
         # --- Process image ---
-        if ext == 'dcm' or is_dicom_bytes(file_bytes):
-            dcm = pydicom.dcmread(io.BytesIO(file_bytes))
-            arr = dcm.pixel_array
-            arr = ((arr - arr.min()) / (np.ptp(arr) + 1e-6) * 255).astype(np.uint8)
-            img = Image.fromarray(arr).convert("RGB")
-        else:
-            img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+        img = pil_from_bytes(file_bytes)
 
-        if ext == 'dcm':
-            # Use the already-preprocessed array resized for model
-            img_array = tf.image.resize(preprocessed_array, input_size).numpy()
-            print("✅ Using cached preprocessed array for DICOM.")
-        else:
-            img_resized = img.resize(input_size)
-            img_array = np.array(img_resized) / 255.0
-            img_array = np.expand_dims(img_array, axis=0)
-
+        # Build model input
+        img_resized = img.resize(input_size)
+        img_array = (np.array(img_resized).astype(np.float32) / 255.0)[None, ...]
 
         if model_id not in MODEL_CACHE:
             print(f"Loading model... '{model_id}' from disk...")
