@@ -763,5 +763,33 @@
     "eye": "Unknown",
     "source": "Manual",
     "uploaded_at": "2025-08-09T05:14:13.680126"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "uploaded_at": "2025-08-09T06:29:18.508725"
+  },
+  {
+    "mrn": "102317110",
+    "age": "N/A",
+    "sex": "F",
+    "study_date": "2022-10-13",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-08-09T06:42:29.449806"
+  },
+  {
+    "mrn": "63w6437564",
+    "age": "34",
+    "gender": "M",
+    "study_date": "2025-09-01",
+    "eye": "RIGHT",
+    "source": "Manual",
+    "sex": "M",
+    "uploaded_at": "2025-08-09T06:43:45.224428"
   }
 ]

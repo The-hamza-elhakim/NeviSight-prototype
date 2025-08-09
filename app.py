@@ -7,17 +7,19 @@ import io
 import os
 import time
 import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
 import numpy as np
-import keras
-from tensorflow.keras.models import load_model
 from keras_unet_collection import models, losses
-from keras.optimizers import Adam
-import pdfkit
 import json
 import base64
 import cv2
 from datetime import datetime
 from uuid import uuid4
+import platform
+
+if platform.system().lower() != "windows":
+    from weasyprint import HTML, CSS
+
 
 
 # --- Config ---
@@ -103,6 +105,12 @@ def append_metadata_record(record):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
+
+def _norm_age(v):
+    # DICOM often gives '046Y', '012M', etc. Keep just the number.
+    if isinstance(v, str) and v and v[-1] in ("Y", "M", "W", "D"):
+        return v[:-1]
+    return v if v not in ("", None) else "N/A"
 
 # --- Routes ---
 @app.route('/')
@@ -206,12 +214,20 @@ def upload_file():
                 "eye": request.form.get('eye'),
                 "source": "Manual"
             }
-        
-        # Normalize keys so PDF generation is consistent
-        patient_id = metadata.get("mrn", "N/A")
-        age = metadata.get("age", "N/A")
-        sex = metadata.get("sex", "N/A")
-        eye = metadata.get("eye", "N/A")
+
+        # --- Normalize keys/values (single source of truth) ---
+        metadata = {
+            **metadata,
+            "mrn": metadata.get("mrn") or "N/A",
+            "sex": (metadata.get("sex") or metadata.get("gender") or "N/A"),
+            "age": _norm_age(metadata.get("age")),
+            "eye": metadata.get("eye") or "N/A",
+        }
+
+        patient_id = metadata["mrn"]
+        age = metadata["age"]
+        sex = metadata["sex"]
+        eye = metadata["eye"]
 
 
         metadata["uploaded_at"] = datetime.utcnow().isoformat()
@@ -330,7 +346,6 @@ def upload_file():
             "avg_confidence": avg_confidence,
         }
 
-
         return render_template(
             "result.html",
             orig_base64=orig_base64,
@@ -348,7 +363,7 @@ def upload_file():
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    cache_id = request.form['cache_id']
+    cache_id = request.form.get('cache_id')
     clinician_notes = request.form.get("clinician_notes", "").strip()
     data = PDF_CACHE.pop(cache_id, None)
 
@@ -373,14 +388,22 @@ def generate_pdf():
         year=datetime.utcnow().year
     )
 
+    if platform.system().lower() != "windows":
+        # Use WeasyPrint in Linux/macOS
+        pdf_bytes = HTML(string=html, base_url=request.url_root).write_pdf()
+    else:
+        # Fallback to pdfkit on Windows
+        import pdfkit
+        wkhtml_path = os.getenv("WKHTMLTOPDF_PATH", r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
+        config = pdfkit.configuration(wkhtmltopdf=wkhtml_path) if os.path.exists(wkhtml_path) else None
+        pdf_bytes = pdfkit.from_string(html, False, configuration=config)
 
-    config = pdfkit.configuration(wkhtmltopdf=r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-    pdf = pdfkit.from_string(html, False, configuration=config)
-
-    response = make_response(pdf)
+    response = make_response(pdf_bytes)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=report_{data["safe_base"]}.pdf'
     return response
+
+
 
 # --- Run ---
 if __name__ == "__main__":

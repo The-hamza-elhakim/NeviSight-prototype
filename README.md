@@ -1,1 +1,1 @@
-# to activate virtual enviorment: .\env\Scripts\Activate.ps1
+# to activate virtual enviorment: .\.venv\Scripts\Activate.ps1
