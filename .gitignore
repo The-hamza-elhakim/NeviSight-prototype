@@ -29,3 +29,31 @@ fundus_classifier_dataset/
 *.jpg
 *.png
 
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.build/
+dist/
+.cache/
+.pytest_cache/
+
+# Editors/OS
+.vscode/
+.idea/
+.DS_Store
+
+# App artifacts
+uploads/
+reports/
+*.log
+*.tmp
+
+# ML artifacts
+checkpoints/
+models/*.h5
+models/*.keras
+*.tflite
