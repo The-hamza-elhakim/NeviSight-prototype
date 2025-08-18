@@ -809,5 +809,45 @@
     "eye": "L",
     "source": "DICOM",
     "uploaded_at": "2025-08-09T06:50:47.993479"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "23",
+    "gender": "M",
+    "study_date": "2025-08-19",
+    "eye": "RIGHT",
+    "source": "Manual",
+    "sex": "M",
+    "uploaded_at": "2025-08-11T07:52:16.287992"
+  },
+  {
+    "mrn": "63w6437564",
+    "age": "N/A",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "sex": "Unknown",
+    "uploaded_at": "2025-08-14T04:00:53.180312"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "N/A",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "sex": "Unknown",
+    "uploaded_at": "2025-08-14T04:01:37.494414"
+  },
+  {
+    "mrn": "12345678909876",
+    "age": "N/A",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "sex": "Unknown",
+    "uploaded_at": "2025-08-18T18:47:09.726271"
   }
 ]

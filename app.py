@@ -5,6 +5,7 @@ from PIL import Image
 import pydicom
 import io
 import os
+import pdfkit
 import time
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
@@ -387,15 +388,11 @@ def generate_pdf():
         year=datetime.utcnow().year
     )
 
-    if platform.system().lower() != "windows":
-        # Use WeasyPrint in Linux/macOS
-        pdf_bytes = HTML(string=html, base_url=request.url_root).write_pdf()
-    else:
-        # Fallback to pdfkit on Windows
-        import pdfkit
-        wkhtml_path = os.getenv("WKHTMLTOPDF_PATH", r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-        config = pdfkit.configuration(wkhtmltopdf=wkhtml_path) if os.path.exists(wkhtml_path) else None
-        pdf_bytes = pdfkit.from_string(html, False, configuration=config)
+    
+    import pdfkit
+    wkhtml_path = os.getenv("WKHTMLTOPDF_PATH", r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
+    config = pdfkit.configuration(wkhtmltopdf=wkhtml_path) if os.path.exists(wkhtml_path) else None
+    pdf_bytes = pdfkit.from_string(html, False, configuration=config)
 
     response = make_response(pdf_bytes)
     response.headers['Content-Type'] = 'application/pdf'
