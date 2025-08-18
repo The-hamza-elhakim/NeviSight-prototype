@@ -18,9 +18,6 @@ from datetime import datetime
 from uuid import uuid4
 import platform
 
-if platform.system().lower() != "windows":
-    from weasyprint import HTML, CSS
-
 
 # --- Config ---
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'dcm'}
@@ -30,6 +27,10 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50 megabytes
 
 PDF_CACHE = {}
+
+# --- PDFKit Config ---
+WKHTMLTOPDF_PATH = os.getenv("WKHTMLTOPDF_PATH",os.path.join(os.path.dirname(__file__), "bin", "wkhtmltopdf")) # local fallback for dev
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 # --- Model Registry ---
 MODEL_REGISTRY_PATH = os.path.join(app.root_path, 'models', 'model_info.json')
@@ -122,6 +123,23 @@ def pil_from_bytes(file_bytes):
         return Image.fromarray(arr).convert("RGB")
     # PNG/JPG path
     return Image.open(io.BytesIO(file_bytes)).convert("RGB")
+
+def _resolve_wkhtmltopdf_path():
+    # 1) Respect env var if it points to a real file
+    env_path = os.getenv("WKHTMLTOPDF_PATH")
+    if env_path and os.path.exists(env_path):
+        return env_path
+
+    # 2) Platform defaults
+    if os.name == "nt":  # Windows
+        # Default install location for the Windows installer
+        return r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"
+
+    # 3) Linux/Mac: use bundled binary in repo
+    return os.path.join(os.path.dirname(__file__), "bin", "wkhtmltopdf")
+
+WKHTMLTOPDF_PATH = _resolve_wkhtmltopdf_path()
+PDFKIT_CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 
 # --- Routes ---
@@ -388,17 +406,16 @@ def generate_pdf():
         year=datetime.utcnow().year
     )
 
-    
-    import pdfkit
-    wkhtml_path = os.getenv("WKHTMLTOPDF_PATH", r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe")
-    config = pdfkit.configuration(wkhtmltopdf=wkhtml_path) if os.path.exists(wkhtml_path) else None
-    pdf_bytes = pdfkit.from_string(html, False, configuration=config)
+    try:
+        pdf_bytes = pdfkit.from_string(html, False, configuration=PDFKIT_CONFIG)
+    except Exception as e:
+        # Friendly fallback if wkhtmltopdf is missing or not executable
+        return f"PDF export isn’t available on this deployment: {e}", 503
 
     response = make_response(pdf_bytes)
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=report_{data["safe_base"]}.pdf'
     return response
-
 
 
 # --- Run ---
