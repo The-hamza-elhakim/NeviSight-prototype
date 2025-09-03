@@ -52,8 +52,3 @@ reports/
 *.log
 *.tmp
 
-# ML artifacts
-checkpoints/
-models/*.h5
-models/*.keras
-*.tflite
