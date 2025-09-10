@@ -879,5 +879,24 @@
     "source": "Manual",
     "sex": "Unknown",
     "uploaded_at": "2025-08-18T19:37:22.469151"
+  },
+  {
+    "mrn": "258107910",
+    "age": "N/A",
+    "sex": "M",
+    "study_date": "2024-03-13",
+    "eye": "L",
+    "source": "DICOM",
+    "uploaded_at": "2025-09-03T21:18:45.642526"
+  },
+  {
+    "mrn": "63w6437564",
+    "age": "23",
+    "gender": "Unknown",
+    "study_date": "",
+    "eye": "Unknown",
+    "source": "Manual",
+    "sex": "Unknown",
+    "uploaded_at": "2025-09-03T21:19:16.057964"
   }
 ]
