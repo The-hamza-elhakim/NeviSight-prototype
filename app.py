@@ -398,7 +398,7 @@ def generate_pdf():
         exam_time=datetime.utcnow().strftime("%H:%M:%S"),
         orig_base64=data["orig_base64"],
         proc_base64=data["proc_base64"],
-        model_name=data["model_name"],
+        model_name=data.get("model_name", "Unknown Model"),
         processing_time=data.get("prediction_time", "N/A"),
         lesion_detected=data["lesion_detected"],
         avg_confidence=data["avg_confidence"],
