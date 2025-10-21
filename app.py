@@ -70,22 +70,24 @@ def is_fundus_image(file_bytes, ext):
 
 def extract_dicom_metadata(file_bytes):
     dcm = pydicom.dcmread(io.BytesIO(file_bytes))
-    # Get raw study date string
-    raw_date = getattr(dcm, "StudyDate", None)
+    study_date = getattr(dcm, "StudyDate", None)
+    birth_date = getattr(dcm, "PatientBirthDate", None)
 
-    # Format DICOM date YYYYMMDD -> YYYY-MM-DD
-    formatted_date = None
-    if raw_date and len(raw_date) == 8:
-        formatted_date = f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}"
+    def fmt(d):
+        if isinstance(d, str) and len(d) == 8:
+            return f"{d[:4]}-{d[4:6]}-{d[6:]}"
+        return None
 
     metadata = {
         "mrn": getattr(dcm, "PatientID", None),
-        "age": getattr(dcm, "PatientAge", None),
+        "dob": fmt(birth_date),
         "sex": getattr(dcm, "PatientSex", None),
-        "study_date": formatted_date,
-        "eye": getattr(dcm, "Laterality", None) or getattr(dcm, "ImageLaterality", None)
+        "study_date": fmt(study_date),
+        "eye": getattr(dcm, "Laterality", None) or getattr(dcm, "ImageLaterality", None),
+        "source": "DICOM",
     }
     return metadata
+
 
 def append_metadata_record(record):
     # Ensure file exists
@@ -99,12 +101,6 @@ def append_metadata_record(record):
         f.seek(0)
         json.dump(data, f, indent=2)
         f.truncate()
-
-def _norm_age(v):
-    # DICOM often gives '046Y', '012M', etc. Keep just the number.
-    if isinstance(v, str) and v and v[-1] in ("Y", "M", "W", "D"):
-        return v[:-1]
-    return v if v not in ("", None) else "N/A"
 
 def pil_from_bytes(file_bytes):
     """
@@ -234,36 +230,30 @@ def upload_file():
         # --- Collect metadata ---
         if ext == 'dcm':
             metadata = extract_dicom_metadata(file_bytes)
-            metadata["source"] = "DICOM"
         else:
             metadata = {
                 "mrn": request.form.get('mrn'),
-                "age": request.form.get('age'),
-                "gender": request.form.get('gender'),
+                "dob": request.form.get('dob'),
+                "sex": request.form.get('gender'),
                 "study_date": request.form.get('study_date'),
                 "eye": request.form.get('eye'),
                 "source": "Manual"
             }
 
-        # --- Normalize keys/values (single source of truth) ---
+        # --- Normalize keys/values ---
         metadata = {
             **metadata,
             "mrn": metadata.get("mrn") or "N/A",
-            "sex": (metadata.get("sex") or metadata.get("gender") or "N/A"),
-            "age": _norm_age(metadata.get("age")),
+            "sex": (metadata.get("sex") or "N/A"),
+            "dob": metadata.get("dob") or "N/A",
             "eye": metadata.get("eye") or "N/A",
+            "study_date": metadata.get("study_date") or "N/A",
+            "uploaded_at": datetime.utcnow().isoformat(),
         }
-
-        patient_id = metadata["mrn"]
-        age = metadata["age"]
-        sex = metadata["sex"]
-        eye = metadata["eye"]
-
-
-        metadata["uploaded_at"] = datetime.utcnow().isoformat()
 
         append_metadata_record(metadata)
         print("📝 Metadata saved:", metadata)
+
 
         # --- Process image ---
         img = pil_from_bytes(file_bytes)
@@ -354,13 +344,13 @@ def upload_file():
             "orig_base64": orig_base64,
             "proc_base64": proc_base64,
             "safe_base": safe_base,
-            "patient_id": patient_id,
-            "age": age,
-            "sex": sex,
+            "patient_id": metadata["mrn"],
+            "dob": metadata["dob"],
+            "sex": metadata["sex"],
             "prediction_time": prediction_time_str,
             "model_name": model_config["name"],
             "lesion_detected": lesion_detected,
-            "eye": eye,
+            "eye": metadata["eye"],
             "avg_confidence": avg_confidence,
         }
 
@@ -372,7 +362,7 @@ def upload_file():
             model_name=model_config["name"],
             prediction_time=prediction_time_str,
             lesion_detected=lesion_detected,
-            eye=eye,
+            eye=metadata["eye"],
         )
 
     
@@ -389,9 +379,9 @@ def generate_pdf():
         return "Error: PDF data expired or not found.", 400
 
     html = render_template(
-        "report_template.html",
+    "report_template.html",
         patient_id=data["patient_id"],
-        age=data["age"],
+        dob=data.get("dob"),
         sex=data["sex"],
         eye=data["eye"],
         exam_date=datetime.utcnow().strftime("%Y-%m-%d"),
@@ -405,6 +395,7 @@ def generate_pdf():
         clinician_notes=clinician_notes,
         year=datetime.utcnow().year
     )
+
 
     try:
         pdf_bytes = pdfkit.from_string(html, False, configuration=PDFKIT_CONFIG)

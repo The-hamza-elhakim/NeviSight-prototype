@@ -114,15 +114,15 @@
 </head>
 <body>
 
-  <h1>CHOROIDAL NEVUS ANALYSIS REPORT</h1>
+  <h1>FUNDUS REPORT</h1>
 
   <div class="section-title">Patient Details</div>
   <table class="info-table">
     <tr>
       <td class="label">Patient ID (MRN)</td>
       <td>{{ patient_id }}</td>
-      <td class="label">Age</td>
-      <td>{{ age }}</td>
+      <td class="label">Date of Birth</td>
+      <td>{{ dob }}</td>
       <td class="label">Sex</td>
       <td>{{ sex }}</td>
     </tr>
@@ -136,7 +136,7 @@
     </tr>
   </table>
 
-<div class="section-title">SEGMENTATION RESULTS</div>
+<div class="section-title">RESULTS</div>
 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
   <tr>
     <th style="text-align: center; padding: 0;">Original Image</th>
@@ -188,7 +188,7 @@
   </table>
 
   <div class="footer">
-    &copy; {{ year }} NeviSight Project
+    &copy; {{ year }} Report by NeviSight
   </div>
 
 </body>
